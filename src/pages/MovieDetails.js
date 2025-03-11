@@ -7,20 +7,35 @@ const MovieDetails = () => {
   const { id } = useParams();
   const [movieDetails, setMovieDetails] = useState(null);
   const [recommendedMovies, setRecommendedMovies] = useState([]);
+  const [rating, setRating] = useState(
+    JSON.parse(localStorage.getItem("ratings"))?.[id] || 0
+  );
 
   useEffect(() => {
     const getMovieDetails = async () => {
-      const details = await fetchMovieDetails(id);
-      setMovieDetails(details);
-
-      if (details?.Genre) {
-        const genre = details.Genre.split(",")[0].trim(); // Use the first genre for recommendations
-        const recommendations = await fetchRecommendedMovies(genre);
-        setRecommendedMovies(recommendations);
+      try {
+        const details = await fetchMovieDetails(id);
+        setMovieDetails(details);
+  
+        if (details?.Genre) {
+          const genre = details.Genre.split(",")[0].trim();
+          const recommendations = await fetchRecommendedMovies(genre);
+          setRecommendedMovies(recommendations);
+        }
+      } catch (error) {
+        console.error("Error fetching movie details or recommendations:", error);
       }
     };
     getMovieDetails();
   }, [id]);
+  
+
+  const handleRating = (newRating) => {
+    setRating(newRating);
+    const ratings = JSON.parse(localStorage.getItem("ratings")) || {};
+    ratings[id] = newRating;
+    localStorage.setItem("ratings", JSON.stringify(ratings));
+  };
 
   return (
     <div style={{ padding: "20px" }}>
@@ -82,6 +97,24 @@ const MovieDetails = () => {
               <p>
                 <strong>Awards:</strong> {movieDetails.Awards}
               </p>
+
+              {/* Star Rating */}
+              <div>
+                <strong>Your Rating:</strong>{" "}
+                {[...Array(5)].map((_, index) => (
+                  <span
+                    key={index}
+                    onClick={() => handleRating(index + 1)}
+                    style={{
+                      cursor: "pointer",
+                      color: index < rating ? "#FFD700" : "#ccc",
+                      fontSize: "1.5em",
+                    }}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
